@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: 
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer 
+
+# Permissions: The IAM role used by your EBS CSI driver must have ec2:DeleteVolume permissions to perform the cleanup.

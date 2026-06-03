@@ -1,0 +1,17 @@
+# This will allow aws-cli pod with SA s3-access-sa to list S3 via Pod Identity.
+# kubectl exec -it aws-cli -- aws s3 ls
+apiVersion: v1
+kind: Pod
+metadata:
+  name: aws-cli
+  namespace: default
+  labels:
+    app: aws-cli
+spec:
+  serviceAccountName: s3-access-sa
+  containers:
+  - name: aws-cli
+    image: amazon/aws-cli
+    command: ["/bin/bash", "-c", "--"]
+    args: ["while true; do sleep 30; done"]
+
