@@ -10,6 +10,10 @@
 crash.log
 crash.*.log
 
+# .DS_Store file ignore for macOS users, which is a hidden file created by the Finder to store custom attributes of a folder such as the position of icons or the choice of a background image. It is not needed in version control and can be safely ignored.
+.DS_Store
+
+
 # Exclude all .tfvars files, which are likely to contain sensitive data, such as
 # password, private keys, and other secrets. These should not be part of version
 # control as they are data points which are potentially sensitive and subject
@@ -43,3 +47,6 @@ terraform.rc
 # Optional: ignore plan files saved before destroying Terraform configuration
 # Uncomment the line below if you want to ignore planout files.
 # planout
+
+# Not ignore empty directories, which are used to store modules and other files. This is important to ensure that the directory structure is maintained in version control, even if the directories themselves are empty.
+!.gitkeep
