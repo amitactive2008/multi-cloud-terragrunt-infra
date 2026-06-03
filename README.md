@@ -1,5 +1,3 @@
-# terraform-by-copilot
-
 Production-grade **multi-cloud** infrastructure managed with **Terraform** modules and **Terragrunt** for DRY, hierarchical configuration. Covers a complete AWS EKS stack and an Azure AKS stack — networking, cluster, database, and all cluster addons.
 
 ## Architecture
