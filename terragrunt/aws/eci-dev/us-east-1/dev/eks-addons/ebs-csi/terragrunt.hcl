@@ -42,7 +42,7 @@ inputs = {
   account_id             = local.account_id
   environment            = local.environment
 
-  ebs_csi_driver_version = "v1.60.1-eksbuild.1"
+  ebs_csi_driver_version = "v1.61.1-eksbuild.1"
 
   tags = {
     Environment = local.environment

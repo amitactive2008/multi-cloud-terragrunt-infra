@@ -31,6 +31,10 @@ remote_state {
     region       = "eu-central-1"
     encrypt      = true
     use_lockfile = true
+    profile      = "jenkins"
+    assume_role = {
+      role_arn = "arn:aws:iam::${local.aws_account_id}:role/terraform"
+    }
   }
   generate = {
     path      = "backend.tf"

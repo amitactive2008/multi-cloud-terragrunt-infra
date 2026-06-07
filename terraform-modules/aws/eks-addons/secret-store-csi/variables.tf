@@ -18,6 +18,12 @@ variable "aws_region" {
   type        = string
 }
 
+variable "aws_profile" {
+  description = "AWS CLI profile to use for kubectl update-kubeconfig"
+  type        = string
+  default     = "jenkins"
+}
+
 variable "account_id" {
   description = "AWS account ID"
   type        = string

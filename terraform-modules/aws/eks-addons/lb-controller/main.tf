@@ -88,6 +88,9 @@ resource "kubernetes_ingress_class_v1" "alb" {
     labels = {
       "app.kubernetes.io/name" = "aws-load-balancer-controller"
     }
+    annotations = {
+      "ingressclass.kubernetes.io/is-default-class" = "true"
+    }
   }
 
   spec {

@@ -25,7 +25,8 @@ dependency "vpc" {
 
 inputs = {
   cluster_name       = "dev-eks"
-  kubernetes_version = "1.35"
+  kubernetes_version = "1.36"
+  account_id         = local.account_id
 
   vpc_id             = dependency.vpc.outputs.vpc_id
   private_subnet_ids = dependency.vpc.outputs.private_subnet_ids
@@ -38,6 +39,7 @@ inputs = {
       max_size       = 5
       disk_size_gb   = 50
       capacity_type  = "ON_DEMAND"
+      ami_type       = "AL2023_x86_64_STANDARD"
       labels = {
         role = "general"
       }
@@ -48,6 +50,15 @@ inputs = {
   cluster_endpoint_public_access  = true
 
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+
+  # IAM groups whose members get EKS cluster-admin access via an assumable role.
+  # Adding/removing users from the group takes effect immediately — no re-apply needed.
+  devops_admin_groups = ["devops"]
+
+  # Individual users/service accounts that also need cluster-admin access.
+  cluster_admin_arns = [
+    "arn:aws:iam::${local.account_id}:user/jenkins",
+  ]
 
   tags = {
     Environment = local.environment

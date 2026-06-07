@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../../../../../terraform-modules/aws/eks-addons/core"
+  source = "../../../../../../../terraform-modules/aws/eks-addons/efs-csi-driver"
 }
 
 locals {
@@ -25,6 +25,25 @@ dependency "eks" {
   mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
 }
 
+# Ensures core (Pod Identity Agent) is deployed before this module
+dependency "core" {
+  config_path = "../core"
+  mock_outputs = {
+    pod_identity_agent_addon_arn = "arn:aws:eks:us-east-1:000000000000:addon/mock/eks-pod-identity-agent/mock"
+  }
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+}
+
+dependency "vpc" {
+  config_path = "../../vpc"
+  mock_outputs = {
+    vpc_id             = "vpc-00000000"
+    vpc_cidr_block     = "10.0.0.0/16"
+    private_subnet_ids = ["subnet-00000001", "subnet-00000002"]
+  }
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+}
+
 inputs = {
   cluster_name           = dependency.eks.outputs.cluster_name
   cluster_endpoint       = dependency.eks.outputs.cluster_endpoint
@@ -33,10 +52,15 @@ inputs = {
   account_id             = local.account_id
   environment            = local.environment
 
-  coredns_version        = "v1.14.3-eksbuild.2"
-  kube_proxy_version     = "v1.36.0-eksbuild.7"
-  vpc_cni_version        = "v1.22.1-eksbuild.2"
-  metrics_server_version = "3.12.2"
+  vpc_id             = dependency.vpc.outputs.vpc_id
+  vpc_cidr           = dependency.vpc.outputs.vpc_cidr_block
+  private_subnet_ids = dependency.vpc.outputs.private_subnet_ids
+
+  efs_csi_driver_version = "v3.2.0-eksbuild.1"
+
+  performance_mode = "generalPurpose"
+  throughput_mode  = "elastic"
+  transition_to_ia = "AFTER_30_DAYS"
 
   tags = {
     Environment = local.environment

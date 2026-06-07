@@ -131,7 +131,17 @@ resource "null_resource" "secret_provider_class" {
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
     command     = <<-EOF
-      kubectl apply -f - <<YAML
+      CREDS=$(aws sts assume-role \
+        --role-arn arn:aws:iam::${var.account_id}:role/terraform \
+        --role-session-name kubectl-session \
+        --profile ${var.aws_profile} \
+        --output json)
+      export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['Credentials']['AccessKeyId'])")
+      export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['Credentials']['SecretAccessKey'])")
+      export AWS_SESSION_TOKEN=$(echo "$CREDS" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['Credentials']['SessionToken'])")
+      unset AWS_PROFILE
+      aws eks update-kubeconfig --region ${var.aws_region} --name ${var.cluster_name}
+      kubectl apply --validate=false -f - <<YAML
       apiVersion: secrets-store.csi.x-k8s.io/v1
       kind: SecretProviderClass
       metadata:
@@ -172,7 +182,7 @@ resource "null_resource" "secret_provider_class" {
       YAML
     EOF
     environment = {
-      AWS_PROFILE = "amit"
+      AWS_PROFILE = "jenkins"
       AWS_REGION  = var.aws_region
     }
   }

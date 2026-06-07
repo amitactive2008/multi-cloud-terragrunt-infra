@@ -58,6 +58,11 @@ output "oidc_provider_url" {
   value       = aws_iam_openid_connect_provider.this.url
 }
 
+output "devops_eks_admin_role_arns" {
+  description = "Map of group-name => IAM role ARN created for EKS cluster-admin access. Group members assume these roles to access the cluster."
+  value       = { for g, r in aws_iam_role.devops_eks_admin : g => r.arn }
+}
+
 output "node_groups" {
   description = "Map of node group names to their status"
   value = {

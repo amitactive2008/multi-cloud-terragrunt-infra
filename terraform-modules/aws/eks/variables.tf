@@ -28,6 +28,7 @@ variable "node_groups" {
     max_size       = number
     disk_size_gb   = optional(number, 50)
     capacity_type  = optional(string, "ON_DEMAND") # ON_DEMAND or SPOT
+    ami_type       = optional(string, "AL2023_x86_64_STANDARD")
     labels         = optional(map(string), {})
     taints = optional(list(object({
       key    = string
@@ -75,4 +76,27 @@ variable "tags" {
   description = "Additional tags to apply to all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "cluster_admin_arns" {
+  description = "Additional IAM user/role ARNs to grant AmazonEKSClusterAdminPolicy via EKS access entries. Individual users/roles added alongside any group-based role."
+  type        = list(string)
+  default     = []
+}
+
+variable "devops_admin_groups" {
+  description = "List of IAM group names whose members need EKS cluster-admin access. A shared IAM role is created per group; group members assume that role to access the cluster. Adding/removing users from the group takes effect immediately — no Terraform re-apply required."
+  type        = list(string)
+  default     = []
+}
+
+variable "account_id" {
+  description = "AWS account ID — used to build IAM ARNs for group-based access roles."
+  type        = string
+}
+
+variable "authentication_mode" {
+  description = "Authentication mode for the EKS cluster. Use API_AND_CONFIG_MAP to support both access entries and aws-auth configmap."
+  type        = string
+  default     = "API_AND_CONFIG_MAP"
 }

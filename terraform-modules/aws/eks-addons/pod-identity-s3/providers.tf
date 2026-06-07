@@ -12,7 +12,7 @@ provider "kubernetes" {
       "--output", "json",
     ]
     env = {
-      AWS_PROFILE = "amit"
+      AWS_PROFILE = "jenkins"
     }
   }
 }

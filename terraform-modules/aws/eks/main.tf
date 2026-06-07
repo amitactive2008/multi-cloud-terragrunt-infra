@@ -3,6 +3,26 @@ locals {
     { Name = var.cluster_name, ManagedBy = "terraform" },
     var.tags
   )
+
+  # SSM paths for the latest EKS-optimised AMI release version per AMI type
+  ami_ssm_paths = {
+    "AL2_x86_64"             = "/aws/service/eks/optimized-ami/${var.kubernetes_version}/amazon-linux-2/recommended/release_version"
+    "AL2_x86_64_GPU"         = "/aws/service/eks/optimized-ami/${var.kubernetes_version}/amazon-linux-2-gpu/recommended/release_version"
+    "AL2023_x86_64_STANDARD" = "/aws/service/eks/optimized-ami/${var.kubernetes_version}/amazon-linux-2023/x86_64/standard/recommended/release_version"
+    "AL2023_ARM_64_STANDARD" = "/aws/service/eks/optimized-ami/${var.kubernetes_version}/amazon-linux-2023/arm64/standard/recommended/release_version"
+  }
+
+  # Merge explicit ARNs + one role ARN per devops group
+  all_admin_arns = toset(concat(
+    var.cluster_admin_arns,
+    [for g in var.devops_admin_groups : "arn:aws:iam::${var.account_id}:role/${g}-eks-admin"]
+  ))
+}
+
+# Look up the latest AMI release version for each node group's AMI type
+data "aws_ssm_parameter" "node_ami_release" {
+  for_each = { for k, v in var.node_groups : k => v.ami_type }
+  name     = local.ami_ssm_paths[each.value]
 }
 
 # ─── IAM Role: EKS Cluster ──────────────────────────────────────────────────
@@ -143,6 +163,11 @@ resource "aws_eks_cluster" "this" {
     public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
   }
 
+  access_config {
+    authentication_mode                         = var.authentication_mode
+    bootstrap_cluster_creator_admin_permissions = true
+  }
+
   enabled_cluster_log_types = var.enabled_cluster_log_types
 
   depends_on = [
@@ -174,9 +199,11 @@ resource "aws_eks_node_group" "this" {
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = var.private_subnet_ids
 
-  instance_types = each.value.instance_types
-  capacity_type  = each.value.capacity_type
-  disk_size      = each.value.disk_size_gb
+  instance_types  = each.value.instance_types
+  capacity_type   = each.value.capacity_type
+  ami_type        = each.value.ami_type
+  disk_size       = each.value.disk_size_gb
+  release_version = data.aws_ssm_parameter.node_ami_release[each.key].value
 
   scaling_config {
     desired_size = each.value.desired_size
@@ -210,4 +237,78 @@ resource "aws_eks_node_group" "this" {
   lifecycle {
     ignore_changes = [scaling_config[0].desired_size]
   }
+}
+
+# ─── EKS Access Entries (console / kubectl access for IAM users & roles) ─────
+#
+# IAM groups cannot be granted EKS access directly. Instead, a dedicated IAM
+# role is created for each group listed in var.devops_admin_groups. Group
+# members assume the role to gain cluster-admin access — adding/removing a user
+# from the group takes effect immediately without any Terraform re-apply.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# One assumable role per devops admin group
+resource "aws_iam_role" "devops_eks_admin" {
+  for_each = toset(var.devops_admin_groups)
+
+  name        = "${each.value}-eks-admin"
+  description = "Assumed by members of the ${each.value} IAM group for EKS cluster-admin access"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { AWS = "arn:aws:iam::${var.account_id}:root" }
+      Condition = {
+        StringLike = {
+          "aws:PrincipalArn" = "arn:aws:iam::${var.account_id}:user/*"
+        }
+      }
+    }]
+  })
+
+  tags = merge(local.common_tags, { Group = each.value })
+}
+
+# Inline policy on each group that allows its members to assume the role
+resource "aws_iam_group_policy" "devops_assume_eks_admin" {
+  for_each = toset(var.devops_admin_groups)
+
+  name  = "assume-${each.value}-eks-admin"
+  group = each.value
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "sts:AssumeRole"
+      Resource = aws_iam_role.devops_eks_admin[each.key].arn
+    }]
+  })
+}
+
+# Access entry + cluster-admin policy for every ARN (explicit + group roles)
+resource "aws_eks_access_entry" "admins" {
+  for_each = local.all_admin_arns
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value
+  type          = "STANDARD"
+
+  tags = local.common_tags
+}
+
+resource "aws_eks_access_policy_association" "admins" {
+  for_each = local.all_admin_arns
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.admins]
 }
