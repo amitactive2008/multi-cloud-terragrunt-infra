@@ -1,0 +1,46 @@
+# VPA (Vertical Pod Autoscaler) Helm values - dev environment
+# Chart: fairwinds-stable/vpa
+
+# ─── Admission Controller ─────────────────────────────────────────────────────
+admissionController:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+  certGen:
+    image:
+      tag: "1.27.2"
+
+# ─── Recommender ──────────────────────────────────────────────────────────────
+recommender:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+
+# ─── Updater ──────────────────────────────────────────────────────────────────
+updater:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+
+# ─── CRDs ─────────────────────────────────────────────────────────────────────
+crds:
+  create: true
+  keepOnDelete: true   # Preserve VPA objects during chart uninstall

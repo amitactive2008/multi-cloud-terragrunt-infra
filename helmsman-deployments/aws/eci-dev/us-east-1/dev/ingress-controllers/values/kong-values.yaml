@@ -1,0 +1,76 @@
+# Kong Ingress Controller Helm values - dev environment
+# Chart: kong/kong
+# IngressClass: kong (non-default — use ingress.ingressClassName: kong)
+#
+# Deployment mode: DB-less (no database) with the Ingress Controller enabled.
+
+# ── Deployment mode ──────────────────────────────────────────────────────────
+env:
+  database: "off"   # DB-less mode
+
+# ── Ingress Controller ───────────────────────────────────────────────────────
+ingressController:
+  enabled: true
+  installCRDs: false
+  env:
+    kong_admin_tls_skip_verify: "true"
+
+# ── IngressClass ─────────────────────────────────────────────────────────────
+ingressClass: kong
+ingressClassAnnotations:
+  ingressclass.kubernetes.io/is-default-class: "false"   # nginx is the default
+
+# ── Proxy service (public-facing NLB) ────────────────────────────────────────
+proxy:
+  enabled: true
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: 8000
+  tls:
+    enabled: true
+    servicePort: 443
+    containerPort: 8443
+
+# ── Admin API (cluster-internal only) ────────────────────────────────────────
+admin:
+  enabled: true
+  type: ClusterIP
+  http:
+    enabled: true
+    servicePort: 8001
+    containerPort: 8001
+  tls:
+    enabled: false
+
+# ── Replicas ─────────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Resources ────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+# ── Autoscaling ──────────────────────────────────────────────────────────────
+autoscaling:
+  enabled: false
+
+# ── Metrics (scraped by Prometheus) ─────────────────────────────────────────
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  labels:
+    release: prometheus
+
+# ── Status listener ──────────────────────────────────────────────────────────
+status:
+  enabled: true

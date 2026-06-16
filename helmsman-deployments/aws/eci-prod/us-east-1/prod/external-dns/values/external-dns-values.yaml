@@ -1,0 +1,35 @@
+# ExternalDNS Helm values - prod environment
+provider:
+  name: aws
+
+env:
+  - name: AWS_DEFAULT_REGION
+    value: "us-east-1"
+
+domainFilters:
+  - "eci.example.com"
+
+policy: "sync"
+txtOwnerId: "prod-eks"
+
+sources:
+  - service
+  - ingress
+
+serviceAccount:
+  create: true
+  name: "external-dns"
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::023417412345:role/external-dns-prod"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+logLevel: "warning"
+logFormat: "json"
+interval: "1m"

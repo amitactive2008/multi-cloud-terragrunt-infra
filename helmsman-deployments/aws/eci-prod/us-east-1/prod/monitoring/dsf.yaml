@@ -1,0 +1,46 @@
+# Helmsman Desired State File - Monitoring Stack (prod)
+metadata:
+  org: "eci"
+  description: "Monitoring stack - Prometheus, Grafana, Alertmanager, Blackbox Exporter"
+  maintainer: "devops-team"
+  envFile: ".env"
+
+settings:
+  kubeContext: "$KUBE_CONTEXT"
+  storageBackend: "secret"
+
+namespaces:
+  monitoring:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+      account: "$ACCOUNT_NAME"
+
+helmRepos:
+  prometheus-community: "https://prometheus-community.github.io/helm-charts"
+
+apps:
+  kube-prometheus-stack:
+    namespace: "monitoring"
+    enabled: true
+    chart: "prometheus-community/kube-prometheus-stack"
+    version: "65.1.1"
+    valuesFiles:
+      - "values/kube-prometheus-stack-values.yaml"
+    wait: true
+    timeout: 600
+    priority: -1
+    description: "Kube Prometheus Stack (Prometheus + Grafana + Alertmanager)"
+
+  prometheus-blackbox-exporter:
+    namespace: "monitoring"
+    enabled: true
+    chart: "prometheus-community/prometheus-blackbox-exporter"
+    version: "9.0.1"
+    valuesFiles:
+      - "values/blackbox-exporter-values.yaml"
+    wait: true
+    timeout: 300
+    priority: 0
+    description: "Blackbox Exporter - HTTP/TCP/ICMP endpoint probing"

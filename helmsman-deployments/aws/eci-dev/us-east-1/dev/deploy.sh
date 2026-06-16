@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Deploy script for all Helmsman components in eci-dev / us-east-1 / dev
+# Mirrors the role that `terragrunt run-all apply` plays in the Terragrunt world.
+#
+# Usage:
+#   ./deploy.sh                              # plan all components (dry-run)
+#   ./deploy.sh --apply                      # apply all components
+#   ./deploy.sh --apply monitoring           # apply a single component
+#   ./deploy.sh --destroy monitoring         # destroy a single component
+#
+# Prerequisites:
+#   brew install helmsman
+#   aws eks update-kubeconfig --region us-east-1 --name dev-eks
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ─── Load env vars from parent directories (mirrors find_in_parent_folders) ───
+# shellcheck source=../../../account.env
+source "${SCRIPT_DIR}/../../../account.env"
+# shellcheck source=../../region.env
+source "${SCRIPT_DIR}/../../region.env"
+# shellcheck source=./env.env
+source "${SCRIPT_DIR}/env.env"
+
+# ─── Parse arguments ──────────────────────────────────────────────────────────
+ACTION="--dry-run"
+COMPONENT=""
+
+for arg in "$@"; do
+  case "$arg" in
+    --apply)    ACTION="--apply" ;;
+    --destroy)  ACTION="--destroy" ;;
+    --dry-run)  ACTION="--dry-run" ;;
+    monitoring|autoscaling|external-dns|ingress-controllers|blackbox-exporter) COMPONENT="$arg" ;;
+    *)          echo "Unknown argument: $arg"; exit 1 ;;
+  esac
+done
+
+# ─── Helper ───────────────────────────────────────────────────────────────────
+run_helmsman() {
+  local component="$1"
+  local component_dir="${SCRIPT_DIR}/${component}"
+  echo ""
+  echo "=============================="
+  echo " Component: ${component}"
+  echo " Action:    ${ACTION}"
+  echo "=============================="
+  # Source component-level overrides (.env may not exist for all components)
+  if [[ -f "${component_dir}/.env" ]]; then
+    # shellcheck disable=SC1090
+    source "${component_dir}/.env"
+  fi
+  helmsman ${ACTION} -f "${component_dir}/dsf.yaml"
+}
+
+# ─── Run ──────────────────────────────────────────────────────────────────────
+if [[ -n "${COMPONENT}" ]]; then
+  run_helmsman "${COMPONENT}"
+else
+  # Ordered deployment (priority within each DSF handles intra-component order)
+  run_helmsman "ingress-controllers"
+  run_helmsman "monitoring"
+  run_helmsman "autoscaling"
+  run_helmsman "external-dns"
+fi

@@ -1,0 +1,81 @@
+# Helmsman Desired State File - Ingress Controllers
+# Deploys:
+#   - ingress-nginx   (NGINX Ingress Controller)
+#   - haproxy-ingress (HAProxy Ingress Controller)
+#   - kong            (Kong Ingress Controller)
+#
+# All three are installed but only ONE should be set as the default
+# IngressClass at a time. By default ingress-nginx is the default class.
+# Set ingressClassResource.default=true in only one controller's values.
+
+metadata:
+  org: "eci"
+  description: "Ingress controllers - NGINX, HAProxy, Kong"
+  maintainer: "devops-team"
+  envFile: ".env"
+
+settings:
+  kubeContext: "$KUBE_CONTEXT"
+  storageBackend: "secret"
+
+namespaces:
+  ingress-nginx:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+  haproxy-controller:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+  kong:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+
+helmRepos:
+  ingress-nginx:  "https://kubernetes.github.io/ingress-nginx"
+  haproxytech:    "https://haproxytech.github.io/helm-charts"
+  kong:           "https://charts.konghq.com"
+
+apps:
+  # ── NGINX Ingress Controller ───────────────────────────────────────────────
+  ingress-nginx:
+    namespace: "ingress-nginx"
+    enabled: true
+    chart: "ingress-nginx/ingress-nginx"
+    version: "4.11.3"
+    valuesFiles:
+      - "values/nginx-values.yaml"
+    wait: true
+    timeout: 300
+    priority: -3
+    description: "NGINX Ingress Controller (default IngressClass)"
+
+  # ── HAProxy Ingress Controller ─────────────────────────────────────────────
+  haproxy-ingress:
+    namespace: "haproxy-controller"
+    enabled: true
+    chart: "haproxytech/kubernetes-ingress"
+    version: "1.43.0"
+    valuesFiles:
+      - "values/haproxy-values.yaml"
+    wait: true
+    timeout: 300
+    priority: -2
+    description: "HAProxy Ingress Controller (IngressClass: haproxy)"
+
+  # ── Kong Ingress Controller ────────────────────────────────────────────────
+  kong:
+    namespace: "kong"
+    enabled: true
+    chart: "kong/kong"
+    version: "2.43.0"
+    valuesFiles:
+      - "values/kong-values.yaml"
+    wait: true
+    timeout: 600
+    priority: -1
+    description: "Kong Ingress Controller + Gateway (IngressClass: kong)"

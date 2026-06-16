@@ -1,0 +1,59 @@
+# Helmsman Desired State File - Autoscaling Stack
+# Deploys:
+#   - VPA  (Vertical Pod Autoscaler)
+#   - Prometheus Adapter  (enables custom-metrics API for HPA)
+#
+# NOTE: HPA is a native Kubernetes controller - no Helm chart is needed.
+#   metrics-server (required for CPU/memory HPA) is already deployed via
+#   Terraform: terragrunt/aws/eci-dev/us-east-1/dev/eks-addons/core
+#   Prometheus Adapter enables HPA on custom Prometheus metrics.
+
+metadata:
+  org: "eci"
+  description: "Autoscaling stack - VPA and Prometheus Adapter for custom-metrics HPA"
+  maintainer: "devops-team"
+  envFile: ".env"
+
+settings:
+  kubeContext: "$KUBE_CONTEXT"
+  storageBackend: "secret"
+
+namespaces:
+  kube-system:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+  monitoring:
+    protected: false
+
+helmRepos:
+  fairwinds-stable: "https://charts.fairwinds.com/stable"
+  prometheus-community: "https://prometheus-community.github.io/helm-charts"
+
+apps:
+  # ── VPA (Vertical Pod Autoscaler) ──────────────────────────────────────────
+  vpa:
+    namespace: "kube-system"
+    enabled: true
+    chart: "fairwinds-stable/vpa"
+    version: "4.7.3"
+    valuesFiles:
+      - "values/vpa-values.yaml"
+    wait: true
+    timeout: 300
+    priority: -1
+    description: "Vertical Pod Autoscaler - recommends/sets optimal pod resource requests"
+
+  # ── Prometheus Adapter (custom-metrics API for HPA) ────────────────────────
+  prometheus-adapter:
+    namespace: "monitoring"
+    enabled: true
+    chart: "prometheus-community/prometheus-adapter"
+    version: "4.11.0"
+    valuesFiles:
+      - "values/prometheus-adapter-values.yaml"
+    wait: true
+    timeout: 300
+    priority: 0
+    description: "Prometheus Adapter - exposes Prometheus metrics via custom.metrics.k8s.io for HPA"

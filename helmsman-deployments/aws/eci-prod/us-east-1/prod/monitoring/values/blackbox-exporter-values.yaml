@@ -1,0 +1,100 @@
+# Blackbox Exporter Helm values - prod environment
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 10s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        valid_status_codes: []
+        method: GET
+        follow_redirects: true
+        preferred_ip_protocol: ip4
+
+    http_2xx_tls:
+      prober: http
+      timeout: 10s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        valid_status_codes: []
+        method: GET
+        follow_redirects: true
+        tls_config:
+          insecure_skip_verify: false
+        preferred_ip_protocol: ip4
+
+    tcp_connect:
+      prober: tcp
+      timeout: 10s
+
+    icmp:
+      prober: icmp
+      timeout: 10s
+      icmp:
+        preferred_ip_protocol: ip4
+
+    dns_udp:
+      prober: dns
+      timeout: 10s
+      dns:
+        transport_protocol: udp
+        preferred_ip_protocol: ip4
+        query_name: "kubernetes.default.svc.cluster.local"
+
+serviceMonitor:
+  enabled: true
+  defaults:
+    labels:
+      release: prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+  targets:
+    - name: kube-apiserver
+      url: https://kubernetes.default.svc:443/healthz
+      module: http_2xx_tls
+      interval: 60s
+      scrapeTimeout: 30s
+      labels:
+        env: prod
+
+prometheusRule:
+  enabled: true
+  additionalLabels:
+    release: prometheus
+  rules:
+    - alert: BlackboxProbeFailed
+      expr: probe_success == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Blackbox probe failed (target: {{ $labels.target }})"
+        description: "Endpoint {{ $labels.target }} has been unreachable for more than 5 minutes."
+
+    - alert: BlackboxSlowProbe
+      expr: avg_over_time(probe_duration_seconds[1m]) > 3
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Blackbox slow probe (target: {{ $labels.target }})"
+        description: "Endpoint {{ $labels.target }} is responding slowly (>3s)."
+
+    - alert: BlackboxSSLCertExpiringSoon
+      expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+      for: 1h
+      labels:
+        severity: warning
+      annotations:
+        summary: "SSL certificate expiring soon (target: {{ $labels.target }})"
+        description: "Certificate for {{ $labels.target }} expires in less than 30 days."

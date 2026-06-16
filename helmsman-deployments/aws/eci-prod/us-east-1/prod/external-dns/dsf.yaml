@@ -1,0 +1,33 @@
+# Helmsman Desired State File - External DNS (prod)
+metadata:
+  org: "eci"
+  description: "ExternalDNS - automatic Route53 record management"
+  maintainer: "devops-team"
+  envFile: ".env"
+
+settings:
+  kubeContext: "$KUBE_CONTEXT"
+  storageBackend: "secret"
+
+namespaces:
+  external-dns:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+
+helmRepos:
+  external-dns: "https://kubernetes-sigs.github.io/external-dns/"
+
+apps:
+  external-dns:
+    namespace: "external-dns"
+    enabled: true
+    chart: "external-dns/external-dns"
+    version: "1.15.0"
+    valuesFiles:
+      - "values/external-dns-values.yaml"
+    wait: true
+    timeout: 300
+    priority: -1
+    description: "ExternalDNS - syncs Ingress/Service hostnames to Route53"

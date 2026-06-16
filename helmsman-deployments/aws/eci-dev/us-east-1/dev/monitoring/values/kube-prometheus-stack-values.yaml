@@ -1,0 +1,102 @@
+# kube-prometheus-stack Helm values - dev environment
+# Chart: prometheus-community/kube-prometheus-stack
+
+# ─── Global ──────────────────────────────────────────────────────────────────
+fullnameOverride: "prometheus"
+
+# ─── Prometheus ──────────────────────────────────────────────────────────────
+prometheus:
+  enabled: true
+  prometheusSpec:
+    replicas: 1
+    retention: "15d"
+    retentionSize: "10GB"
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "gp3"   # matches EBS CSI sc deployed via Terraform
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+    # Scrape all ServiceMonitors and PodMonitors across namespaces
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+# ─── Grafana ─────────────────────────────────────────────────────────────────
+grafana:
+  enabled: true
+  replicas: 1
+  adminPassword: ""   # Leave empty - sourced from existing K8s secret below
+  admin:
+    existingSecret: "grafana-admin-secret"
+    userKey: "admin-user"
+    passwordKey: "admin-password"
+  persistence:
+    enabled: true
+    storageClassName: "gp3"
+    size: 5Gi
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  # Expose via LoadBalancer or configure Ingress separately
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false   # Set to true and configure when lb-controller is ready
+  grafana.ini:
+    server:
+      root_url: "https://grafana.$DOMAIN"
+    auth:
+      disable_login_form: false
+
+# ─── Alertmanager ────────────────────────────────────────────────────────────
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "gp3"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+# ─── Node Exporter ───────────────────────────────────────────────────────────
+nodeExporter:
+  enabled: true
+
+# ─── kube-state-metrics ──────────────────────────────────────────────────────
+kubeStateMetrics:
+  enabled: true
+
+# ─── Prometheus Operator ─────────────────────────────────────────────────────
+prometheusOperator:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"

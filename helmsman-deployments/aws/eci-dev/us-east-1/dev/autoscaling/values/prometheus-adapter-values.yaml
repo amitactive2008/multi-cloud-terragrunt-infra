@@ -1,0 +1,38 @@
+# Prometheus Adapter Helm values - dev environment
+# Chart: prometheus-community/prometheus-adapter
+# Exposes Prometheus metrics via the custom.metrics.k8s.io API so HPA can
+# scale on application-level metrics (e.g. requests/second, queue depth).
+
+# ─── Prometheus connection ────────────────────────────────────────────────────
+prometheus:
+  # Points to the kube-prometheus-stack Prometheus service
+  url: "http://prometheus-kube-prometheus-prometheus.monitoring.svc"
+  port: 9090
+  path: ""
+
+# ─── Resources ────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "50m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+replicas: 1
+
+# ─── Custom metric rules ──────────────────────────────────────────────────────
+rules:
+  default: true    # Include default set of rules (CPU, memory aliases)
+  custom:
+    - seriesQuery: 'http_requests_total{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace:
+            resource: namespace
+          pod:
+            resource: pod
+      name:
+        matches: "^(.*)_total$"
+        as: "${1}_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'

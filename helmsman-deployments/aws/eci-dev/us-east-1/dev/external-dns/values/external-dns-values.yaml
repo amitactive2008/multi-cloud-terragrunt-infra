@@ -1,0 +1,51 @@
+# ExternalDNS Helm values - dev environment
+# Chart: external-dns/external-dns
+
+# ─── Provider ─────────────────────────────────────────────────────────────────
+provider:
+  name: aws
+
+# ─── AWS settings ─────────────────────────────────────────────────────────────
+env:
+  - name: AWS_DEFAULT_REGION
+    value: "us-east-1"
+
+# ─── Domain filters ───────────────────────────────────────────────────────────
+domainFilters:
+  - "dev.eci.example.com"   # Replace with your actual domain
+
+# ─── Hosted Zone filters (optional but recommended) ───────────────────────────
+# zoneIdFilters:
+#   - "ZXXXXXXXXXX"   # Uncomment and set to your Route53 hosted zone ID
+
+# ─── Sync policy ──────────────────────────────────────────────────────────────
+policy: "sync"          # sync = create & delete records; upsert-only = create only
+txtOwnerId: "dev-eks"   # Unique identifier so ExternalDNS owns its records
+
+# ─── Sources to watch ─────────────────────────────────────────────────────────
+sources:
+  - service
+  - ingress
+
+# ─── IAM / Pod Identity ───────────────────────────────────────────────────────
+serviceAccount:
+  create: true
+  name: "external-dns"
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::088317451471:role/external-dns-dev"
+
+# ─── Resources ────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+# ─── Log level ────────────────────────────────────────────────────────────────
+logLevel: "info"
+logFormat: "json"
+
+# ─── Interval ─────────────────────────────────────────────────────────────────
+interval: "1m"

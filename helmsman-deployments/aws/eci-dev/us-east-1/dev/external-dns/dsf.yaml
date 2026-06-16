@@ -1,0 +1,39 @@
+# Helmsman Desired State File - External DNS
+# Deploys: external-dns (Route53 integration via EKS Pod Identity)
+#
+# Prerequisite: the pod-identity-s3 module in Terraform already shows the
+# pattern for Pod Identity. Create a similar IAM role for ExternalDNS with
+# Route53 permissions and reference its ARN in values/external-dns-values.yaml.
+
+metadata:
+  org: "eci"
+  description: "ExternalDNS - automatic Route53 record management"
+  maintainer: "devops-team"
+  envFile: ".env"
+
+settings:
+  kubeContext: "$KUBE_CONTEXT"
+  storageBackend: "secret"
+
+namespaces:
+  external-dns:
+    protected: false
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+
+helmRepos:
+  external-dns: "https://kubernetes-sigs.github.io/external-dns/"
+
+apps:
+  external-dns:
+    namespace: "external-dns"
+    enabled: true
+    chart: "external-dns/external-dns"
+    version: "1.15.0"
+    valuesFiles:
+      - "values/external-dns-values.yaml"
+    wait: true
+    timeout: 300
+    priority: -1
+    description: "ExternalDNS - syncs Ingress/Service hostnames to Route53"

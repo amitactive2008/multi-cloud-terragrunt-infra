@@ -1,0 +1,30 @@
+# Prometheus Adapter Helm values - prod environment
+prometheus:
+  url: "http://prometheus-kube-prometheus-prometheus.monitoring.svc"
+  port: 9090
+  path: ""
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+replicas: 2
+
+rules:
+  default: true
+  custom:
+    - seriesQuery: 'http_requests_total{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace:
+            resource: namespace
+          pod:
+            resource: pod
+      name:
+        matches: "^(.*)_total$"
+        as: "${1}_per_second"
+      metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'

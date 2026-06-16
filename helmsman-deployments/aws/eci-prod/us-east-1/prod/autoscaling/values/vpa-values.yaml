@@ -1,0 +1,40 @@
+# VPA Helm values - prod environment
+admissionController:
+  enabled: true
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  certGen:
+    image:
+      tag: "1.27.2"
+
+recommender:
+  enabled: true
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+updater:
+  enabled: true
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+crds:
+  create: true
+  keepOnDelete: true
