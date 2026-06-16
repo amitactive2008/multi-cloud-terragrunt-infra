@@ -38,7 +38,7 @@ inputs = {
       min_size       = 1
       max_size       = 5
       disk_size_gb   = 50
-      capacity_type  = "ON_DEMAND"
+      capacity_type  = "SPOT"
       ami_type       = "AL2023_x86_64_STANDARD"
       labels = {
         role = "general"
@@ -50,7 +50,6 @@ inputs = {
   cluster_endpoint_public_access  = true
 
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-
   # IAM groups whose members get EKS cluster-admin access via an assumable role.
   # Adding/removing users from the group takes effect immediately — no re-apply needed.
   devops_admin_groups = ["devops"]

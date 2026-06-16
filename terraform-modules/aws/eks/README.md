@@ -63,7 +63,7 @@ devops group member  →  assume devops-eks-admin role  →  EKS cluster-admin
 aws eks update-kubeconfig \
   --name <cluster_name> \
   --region <aws_region> \
-  --role-arn arn:aws:iam::<account_id>:role/devops-eks-admin
+  --role-arn arn:aws:iam::<account_id>:role/devops-eks-admin --profile default
 
 # Verify access
 kubectl get nodes

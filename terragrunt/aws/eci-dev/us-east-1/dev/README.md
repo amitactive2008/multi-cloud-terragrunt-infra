@@ -25,7 +25,7 @@ vpc
 
 ```bash
 BASE=$(pwd)
-
+export AWS_PROFILE='jenkins'
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/vpc
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/rds
