@@ -20,6 +20,8 @@ dev/
 ├── monitoring/
 │   ├── dsf.yaml             # Helmsman Desired State File
 │   ├── .env                 # component-level env overrides
+│   ├── ingress-monitoring-alb.yaml  # internal ALB ingress (single ALB, multi-port)
+│   ├── SOP-monitoring-stack.md      # install/use SOP for monitoring stack
 │   └── values/
 │       ├── kube-prometheus-stack-values.yaml
 │       └── blackbox-exporter-values.yaml
@@ -66,6 +68,10 @@ dev/
 2. **kubeconfig updated**
    ```bash
    aws eks update-kubeconfig --region us-east-1 --name dev-eks --profile jenkins
+   
+   or
+
+   aws eks update-kubeconfig --region us-east-1 --name dev-eks --role-arn arn:aws:iam::088317451471:role/dev-eks-devops-group-EKSAdminFullAccessRole --profile amit
    ```
 
 3. **Grafana admin secret** (one-time):
@@ -100,6 +106,15 @@ cd helmsman-deployments/aws/eci-dev/us-east-1/dev
 # Destroy a single component
 ./deploy.sh --destroy monitoring
 ```
+
+Monitoring flow notes:
+- `./deploy.sh --apply monitoring` now performs two steps:
+   1. Helmsman apply for monitoring charts (`monitoring/dsf.yaml`)
+   2. Internal ALB ingress apply (`monitoring/ingress-monitoring-alb.yaml`)
+- `./deploy.sh --destroy monitoring` removes both charts and internal ALB ingress.
+
+SOP:
+- See `monitoring/SOP-monitoring-stack.md` for full install, verification, and access guidance.
 
 ## Env Vars Hierarchy
 

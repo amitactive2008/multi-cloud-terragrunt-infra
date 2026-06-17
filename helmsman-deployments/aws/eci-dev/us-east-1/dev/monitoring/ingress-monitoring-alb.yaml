@@ -1,0 +1,87 @@
+---
+# Single ALB for all monitoring components - INTERNAL (Private)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitoring-alb-main
+  namespace: monitoring
+  labels:
+    app: monitoring
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: monitoring-alb-group
+    alb.ingress.kubernetes.io/group.order: '1'
+    # Multi-port configuration: Grafana (3000), Prometheus (9090), Alertmanager (9093)
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 3000}, {"HTTP": 9090}, {"HTTP": 9093}]'
+spec:
+  ingressClassName: alb
+  rules:
+    # Grafana backend (will be served on port 3000)
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-prometheus-stack-grafana
+                port:
+                  number: 80
+
+---
+# Prometheus target for port 9090
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-alb
+  namespace: monitoring
+  labels:
+    app: prometheus
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: monitoring-alb-group
+    alb.ingress.kubernetes.io/group.order: '2'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 9090}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /-/healthy
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-prometheus
+                port:
+                  number: 9090
+
+---
+# Alertmanager target for port 9093
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alertmanager-alb
+  namespace: monitoring
+  labels:
+    app: alertmanager
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: monitoring-alb-group
+    alb.ingress.kubernetes.io/group.order: '3'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 9093}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /-/healthy
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-alertmanager
+                port:
+                  number: 9093

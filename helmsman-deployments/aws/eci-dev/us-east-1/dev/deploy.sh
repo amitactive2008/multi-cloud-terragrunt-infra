@@ -17,10 +17,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ─── Load env vars from parent directories (mirrors find_in_parent_folders) ───
-# shellcheck source=../../../account.env
-source "${SCRIPT_DIR}/../../../account.env"
-# shellcheck source=../../region.env
-source "${SCRIPT_DIR}/../../region.env"
+# shellcheck source=../../account.env
+source "${SCRIPT_DIR}/../../account.env"
+# shellcheck source=../region.env
+source "${SCRIPT_DIR}/../region.env"
 # shellcheck source=./env.env
 source "${SCRIPT_DIR}/env.env"
 
@@ -53,6 +53,20 @@ run_helmsman() {
     source "${component_dir}/.env"
   fi
   helmsman ${ACTION} -f "${component_dir}/dsf.yaml"
+
+  # Monitoring post-step: manage internal ALB ingress in the same flow.
+  if [[ "${component}" == "monitoring" ]]; then
+    local ingress_manifest="${component_dir}/ingress-monitoring-alb.yaml"
+    if [[ "${ACTION}" == "--apply" ]]; then
+      echo "Applying internal ALB ingress for monitoring stack"
+      kubectl apply -f "${ingress_manifest}"
+    elif [[ "${ACTION}" == "--destroy" ]]; then
+      echo "Deleting internal ALB ingress for monitoring stack"
+      kubectl delete -f "${ingress_manifest}" --ignore-not-found=true
+    else
+      echo "Dry-run mode: internal ALB ingress step skipped (apply uses ${ingress_manifest})"
+    fi
+  fi
 }
 
 # ─── Run ──────────────────────────────────────────────────────────────────────

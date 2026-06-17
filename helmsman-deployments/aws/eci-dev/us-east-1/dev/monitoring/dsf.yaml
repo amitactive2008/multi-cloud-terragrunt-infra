@@ -5,7 +5,7 @@
 
 metadata:
   org: "eci"
-  description: "Monitoring stack - Prometheus, Grafana, Alertmanager, Blackbox Exporter"
+  description: "Monitoring stack - Prometheus, Grafana, Alertmanager, Blackbox Exporter (internal ALB ingress applied by deploy script)"
   maintainer: "devops-team"
   envFile: ".env"
 

@@ -30,7 +30,7 @@ controller:
 
   # ── Metrics (scraped by Prometheus) ─────────────────────────────────────────
   serviceMonitor:
-    enabled: true
+    enabled: false
     namespace: monitoring
 
   # ── HAProxy config ───────────────────────────────────────────────────────────

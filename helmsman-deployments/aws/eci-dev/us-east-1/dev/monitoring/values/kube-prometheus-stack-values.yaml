@@ -21,7 +21,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: "gp3"   # matches EBS CSI sc deployed via Terraform
+          storageClassName: "ebs-gp3"   # matches EBS CSI sc deployed via Terraform
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -30,6 +30,11 @@ prometheus:
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
+  # Expose Prometheus UI via Ingress
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false   # Manage Ingress separately via manual resources
 
 # ─── Grafana ─────────────────────────────────────────────────────────────────
 grafana:
@@ -42,7 +47,7 @@ grafana:
     passwordKey: "admin-password"
   persistence:
     enabled: true
-    storageClassName: "gp3"
+    storageClassName: "ebs-gp3"
     size: 5Gi
   resources:
     requests:
@@ -55,10 +60,10 @@ grafana:
   service:
     type: ClusterIP
   ingress:
-    enabled: false   # Set to true and configure when lb-controller is ready
+    enabled: false   # Manage Ingress separately via manual resources
   grafana.ini:
     server:
-      root_url: "https://grafana.$DOMAIN"
+      root_url: "http://grafana.dev-eks"   # CHANGE: match your hostname
     auth:
       disable_login_form: false
 
@@ -77,15 +82,20 @@ alertmanager:
     storage:
       volumeClaimTemplate:
         spec:
-          storageClassName: "gp3"
+          storageClassName: "ebs-gp3"
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
               storage: 5Gi
+  # Expose Alertmanager UI via Ingress
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false   # Manage Ingress separately via manual resources
 
 # ─── Node Exporter ───────────────────────────────────────────────────────────
 nodeExporter:
-  enabled: true
+  enabled: false   # Disabled due to pod density constraints on small cluster
 
 # ─── kube-state-metrics ──────────────────────────────────────────────────────
 kubeStateMetrics:
