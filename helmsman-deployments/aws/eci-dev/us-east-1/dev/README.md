@@ -10,6 +10,12 @@ instead of Terraform resources.
 dev/
 ├── env.env                  # environment variables (cluster, domain, etc.)
 ├── deploy.sh                # single entry-point to deploy all components
+├── common-devops-chart/
+│   ├── dsf.yaml             # Team namespaces and resource guardrails
+│   ├── values/
+│   │   └── team-namespaces-values.yaml
+│   └── chart/
+│       └── templates/       # Namespace, ResourceQuota, LimitRange
 ├── ingress-controllers/
 │   ├── dsf.yaml             # NGINX + HAProxy + Kong ingress controllers
 │   ├── .env                 # component-level env overrides
@@ -42,6 +48,7 @@ dev/
 
 | Component | Helm Chart | Namespace | Purpose |
 |---|---|---|---|
+| Common DevOps Chart | local chart (`common-devops-chart/chart`) | `kube-system` (release), creates team namespaces | Team namespace bootstrap + quota/limit guardrails |
 | NGINX Ingress | `ingress-nginx/ingress-nginx` | `ingress-nginx` | Default IngressClass, AWS NLB |
 | HAProxy Ingress | `haproxytech/kubernetes-ingress` | `haproxy-controller` | Opt-in IngressClass `haproxy` |
 | Kong Ingress | `kong/kong` | `kong` | Opt-in IngressClass `kong`, API Gateway |
@@ -98,6 +105,7 @@ cd helmsman-deployments/aws/eci-dev/us-east-1/dev
 ./deploy.sh --apply
 
 # Apply a single component
+./deploy.sh --apply common-devops-chart
 ./deploy.sh --apply ingress-controllers
 ./deploy.sh --apply monitoring
 ./deploy.sh --apply autoscaling

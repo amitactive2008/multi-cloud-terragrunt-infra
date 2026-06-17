@@ -1,0 +1,20 @@
+{{- range $team := .Values.teams }}
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ printf "%s-limitrange" $team.name | quote }}
+  namespace: {{ $team.name | quote }}
+spec:
+  limits:
+    - type: Container
+      max:
+        cpu: {{ $team.defaults.max.cpu | quote }}
+        memory: {{ $team.defaults.max.memory | quote }}
+      default:
+        cpu: {{ $team.defaults.default.cpu | quote }}
+        memory: {{ $team.defaults.default.memory | quote }}
+      defaultRequest:
+        cpu: {{ $team.defaults.defaultRequest.cpu | quote }}
+        memory: {{ $team.defaults.defaultRequest.memory | quote }}
+{{- end }}

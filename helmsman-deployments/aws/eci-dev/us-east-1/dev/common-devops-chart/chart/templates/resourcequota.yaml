@@ -1,0 +1,15 @@
+{{- range $team := .Values.teams }}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ printf "%s-quota" $team.name | quote }}
+  namespace: {{ $team.name | quote }}
+spec:
+  hard:
+    pods: {{ $team.quotas.pods | quote }}
+    requests.cpu: {{ $team.quotas.requestsCpu | quote }}
+    limits.cpu: {{ $team.quotas.limitsCpu | quote }}
+    requests.memory: {{ $team.quotas.requestsMemory | quote }}
+    limits.memory: {{ $team.quotas.limitsMemory | quote }}
+{{- end }}

@@ -1,0 +1,44 @@
+teams:
+  - name: team-a
+    labels:
+      owner: devops
+      environment: dev
+    annotations: {}
+    quotas:
+      pods: "30"
+      requestsCpu: "8"
+      limitsCpu: "16"
+      requestsMemory: "16Gi"
+      limitsMemory: "32Gi"
+    defaults:
+      max:
+        cpu: "2"
+        memory: "4Gi"
+      default:
+        cpu: "500m"
+        memory: "1Gi"
+      defaultRequest:
+        cpu: "200m"
+        memory: "512Mi"
+
+  - name: team-b
+    labels:
+      owner: devops
+      environment: dev
+    annotations: {}
+    quotas:
+      pods: "20"
+      requestsCpu: "4"
+      limitsCpu: "8"
+      requestsMemory: "8Gi"
+      limitsMemory: "16Gi"
+    defaults:
+      max:
+        cpu: "1"
+        memory: "2Gi"
+      default:
+        cpu: "300m"
+        memory: "512Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "256Mi"

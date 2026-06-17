@@ -1,0 +1,31 @@
+# Helmsman Desired State File - Team Namespaces and Resource Guardrails
+
+metadata:
+  org: "eci"
+  description: "Team namespaces with ResourceQuota and LimitRange defaults"
+  maintainer: "devops-team"
+
+settings:
+  kubeContext: "$KUBE_CONTEXT"
+  storageBackend: "secret"
+
+namespaces:
+  kube-system:
+    protected: true
+    labels:
+      environment: "$ENVIRONMENT"
+      managed-by: "helmsman"
+      account: "$ACCOUNT_NAME"
+
+apps:
+  common-devops-chart:
+    namespace: "kube-system"
+    enabled: true
+    chart: "chart"
+    version: "0.1.0"
+    valuesFiles:
+      - "values/team-namespaces-values.yaml"
+    wait: true
+    timeout: 300
+    priority: -20
+    description: "Create team namespaces and enforce namespace/pod resource limits"
