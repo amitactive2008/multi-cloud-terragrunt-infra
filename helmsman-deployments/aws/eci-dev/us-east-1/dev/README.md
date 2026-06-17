@@ -104,6 +104,9 @@ cd helmsman-deployments/aws/eci-dev/us-east-1/dev
 # Apply all components
 ./deploy.sh --apply
 
+# Destroy all components
+./deploy.sh --destroy
+
 # Apply a single component
 ./deploy.sh --apply common-devops-chart
 ./deploy.sh --apply ingress-controllers
