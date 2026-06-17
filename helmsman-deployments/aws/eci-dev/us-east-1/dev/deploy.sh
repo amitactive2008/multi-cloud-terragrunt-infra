@@ -33,7 +33,7 @@ for arg in "$@"; do
     --apply)    ACTION="--apply" ;;
     --destroy)  ACTION="--destroy" ;;
     --dry-run)  ACTION="--dry-run" ;;
-    common-devops-chart|monitoring|autoscaling|external-dns|ingress-controllers|blackbox-exporter) COMPONENT="$arg" ;;
+    common-devops-chart|monitoring|autoscaling|ingress-controllers|blackbox-exporter) COMPONENT="$arg" ;;
     *)          echo "Unknown argument: $arg"; exit 1 ;;
   esac
 done
@@ -87,5 +87,4 @@ else
   run_helmsman "ingress-controllers"
   run_helmsman "monitoring"
   run_helmsman "autoscaling"
-  run_helmsman "external-dns"
 fi

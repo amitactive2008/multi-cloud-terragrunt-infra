@@ -37,11 +37,6 @@ dev/
 │   └── values/
 │       ├── vpa-values.yaml
 │       └── prometheus-adapter-values.yaml
-└── external-dns/
-    ├── dsf.yaml
-    ├── .env
-    └── values/
-        └── external-dns-values.yaml
 ```
 
 ## Components Deployed
@@ -58,7 +53,7 @@ dev/
 | Blackbox Exporter | `prometheus-community/prometheus-blackbox-exporter` | `monitoring` | HTTP/TCP/ICMP endpoint probing |
 | VPA | `fairwinds-stable/vpa` | `kube-system` | Vertical Pod Autoscaler |
 | Prometheus Adapter | `prometheus-community/prometheus-adapter` | `monitoring` | Custom metrics API for HPA |
-| ExternalDNS | `external-dns/external-dns` | `external-dns` | Route53 DNS sync |
+
 
 > **HPA** (Horizontal Pod Autoscaler) is a native Kubernetes controller — no Helm
 > chart is required. CPU/memory HPA works out-of-the-box once `metrics-server` is
@@ -89,10 +84,6 @@ dev/
      --from-literal=admin-password=<your-password>
    ```
 
-4. **IAM Role for ExternalDNS** — Create an IAM role
-   `arn:aws:iam::088317451471:role/external-dns-dev` with Route53 write permissions
-   and register it with EKS Pod Identity (same pattern as `pod-identity-s3` in Terraform).
-
 ## Usage
 
 ```bash
@@ -112,7 +103,6 @@ cd helmsman-deployments/aws/eci-dev/us-east-1/dev
 ./deploy.sh --apply ingress-controllers
 ./deploy.sh --apply monitoring
 ./deploy.sh --apply autoscaling
-./deploy.sh --apply external-dns
 
 # Destroy a single component
 ./deploy.sh --destroy monitoring

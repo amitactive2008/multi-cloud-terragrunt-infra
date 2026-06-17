@@ -17,7 +17,6 @@ helmsman-deployments/
 │   │           ├── deploy.sh          ← entry-point
 │   │           ├── monitoring/        ← Prometheus, Grafana, Alertmanager, Blackbox Exporter
 │   │           ├── autoscaling/       ← VPA, Prometheus Adapter (custom-metrics HPA)
-│   │           ├── external-dns/      ← Route53 DNS sync
 │   │           └── ingress-controllers/ ← NGINX, HAProxy, Kong
 │   └── eci-prod/
 │       └── ... (same structure, prod-sized values)
