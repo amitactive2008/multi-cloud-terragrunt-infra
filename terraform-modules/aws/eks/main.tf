@@ -15,7 +15,7 @@ locals {
   # Merge explicit ARNs + one role ARN per devops group
   all_admin_arns = toset(concat(
     var.cluster_admin_arns,
-    [for g in var.devops_admin_groups : "arn:aws:iam::${var.account_id}:role/${g}-eks-admin"]
+    [for g in var.devops_admin_groups : "arn:aws:iam::${var.account_id}:role/${var.cluster_name}-${g}-group-EKSAdminFullAccessRole"]
   ))
 }
 
@@ -247,11 +247,17 @@ resource "aws_eks_node_group" "this" {
 # from the group takes effect immediately without any Terraform re-apply.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Ensure IAM groups exist for every configured admin group name
+resource "aws_iam_group" "devops_eks_admin" {
+  for_each = toset(var.devops_admin_groups)
+  name     = each.value
+}
+
 # One assumable role per devops admin group
 resource "aws_iam_role" "devops_eks_admin" {
   for_each = toset(var.devops_admin_groups)
 
-  name        = "${each.value}-eks-admin"
+  name        = "${var.cluster_name}-${each.value}-group-EKSAdminFullAccessRole"
   description = "Assumed by members of the ${each.value} IAM group for EKS cluster-admin access"
 
   assume_role_policy = jsonencode({
@@ -271,12 +277,30 @@ resource "aws_iam_role" "devops_eks_admin" {
   tags = merge(local.common_tags, { Group = each.value })
 }
 
+# IAM policy required for EKS Console and API access after role assumption
+resource "aws_iam_role_policy" "devops_eks_admin_console" {
+  for_each = toset(var.devops_admin_groups)
+
+  name = "${var.cluster_name}-${each.value}-group-EKSAdminFullAccessPolicy"
+  role = aws_iam_role.devops_eks_admin[each.key].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "VisualEditor0"
+      Effect   = "Allow"
+      Action   = "eks:*"
+      Resource = "*"
+    }]
+  })
+}
+
 # Inline policy on each group that allows its members to assume the role
 resource "aws_iam_group_policy" "devops_assume_eks_admin" {
   for_each = toset(var.devops_admin_groups)
 
   name  = "assume-${each.value}-eks-admin"
-  group = each.value
+  group = aws_iam_group.devops_eks_admin[each.key].name
 
   policy = jsonencode({
     Version = "2012-10-17"

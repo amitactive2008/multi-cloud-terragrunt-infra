@@ -12,7 +12,7 @@ AWS Account eci-dev / us-east-1 / dev
 │  ├── Private subnets (3× AZ, EKS nodes)     │
 │  └── Database subnets (3× AZ, RDS)          │
 │                                             │
-│  EKS Cluster: dev-eks (k8s 1.35)            │
+│  EKS Cluster: dev-eks (k8s 1.36)            │
 │  ├── Node group: 2× t3.medium               │
 │  └── EKS Addons                             │
 │      ├── core        (CoreDNS, kube-proxy,  │
@@ -137,7 +137,7 @@ cloud/account-name/region/env/component/terragrunt.hcl
 | Tool        | Version   |
 |-------------|-----------|
 | Terraform   | >= 1.10.0 |
-| Terragrunt  | >= 0.55   |
+| Terragrunt  | >= 1.0.0  |
 | AWS CLI     | >= 2.x    |
 | Azure CLI   | >= 2.x    |
 | kubectl     | >= 1.28   |
@@ -178,14 +178,57 @@ terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/secret
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/pod-identity-s3
 ```
 
+Terragrunt v1 shortcut (run from `terragrunt/aws/eci-dev/us-east-1/dev` only):
+
+```bash
+cd terragrunt/aws/eci-dev/us-east-1/dev
+terragrunt run --all apply --non-interactive
+```
+
+Note: Running `terragrunt run --all` from repo root can fail because Terragrunt will also traverse unrelated cloud roots.
+
 ### Configure kubectl (AWS)
+
+EKS admin access for developers is granted through IAM group -> assumable role -> EKS access entry.
+For devops access, use role `dev-eks-devops-group-EKSAdminFullAccessRole`.
+Ensure IAM user `amit` is a member of IAM group `devops` before running kubeconfig update.
 
 ```bash
 aws eks update-kubeconfig \
   --region us-east-1 \
   --name dev-eks \
+  --role-arn arn:aws:iam::088317451471:role/dev-eks-devops-group-EKSAdminFullAccessRole \
+  --profile amit
+```
+
+If role assumption fails, add membership (from an admin profile):
+
+```bash
+aws iam add-user-to-group --group-name devops --user-name amit --profile jenkins
+```
+
+If `jenkins` gets `AccessDenied` for direct IAM calls (for example `iam:GetGroup`),
+assume the Terraform admin role first, then run IAM operations with temporary credentials:
+
+```bash
+CREDS=$(aws sts assume-role \
   --role-arn arn:aws:iam::088317451471:role/terraform \
-  --profile jenkins
+  --role-session-name iam-admin \
+  --profile jenkins)
+
+export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | jq -r '.Credentials.AccessKeyId')
+export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | jq -r '.Credentials.SecretAccessKey')
+export AWS_SESSION_TOKEN=$(echo "$CREDS" | jq -r '.Credentials.SessionToken')
+
+aws iam add-user-to-group --group-name devops --user-name amit
+aws iam get-group --group-name devops --query 'Users[].UserName' --output text
+```
+
+After IAM admin commands, clear temporary credentials before testing kubectl as `amit`:
+
+```bash
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+export AWS_PROFILE=amit
 ```
 
 ## Azure Deployment Order
@@ -243,6 +286,25 @@ az aks get-credentials \
 |-------|---------|-------------|
 | AWS   | EKS Pod Identity | IAM role with `pods.eks.amazonaws.com` trust; no OIDC required |
 | Azure | Workload Identity | Federated credential on User-Assigned Managed Identity via OIDC issuer |
+
+## Troubleshooting
+
+- AWS LB Controller / IngressClass conflict:
+  - Symptom: `ingressclasses.networking.k8s.io "alb" already exists`
+  - Cause: `alb` IngressClass is managed by the Helm chart.
+  - Fix: Do not define a separate Terraform `kubernetes_ingress_class_v1.alb` resource in this module.
+
+- State lock conflicts after interrupted runs:
+  - Symptom: S3 lock errors with `StatusCode: 412` and `Lock Info`.
+  - Fix: run `terragrunt force-unlock -force <LOCK_ID>` in the affected module directory, then re-run apply.
+
+- Non-interactive apply hanging/cancelled:
+  - Use `terragrunt apply -auto-approve --non-interactive` for module-level runs.
+
+- `kubectl` still shows `AccessDenied` after role/group fixes:
+  - Symptom: caller appears as an assumed admin role instead of IAM user `amit`.
+  - Cause: temporary `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` are still exported.
+  - Fix: `unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN` and set `AWS_PROFILE=amit` again.
 
 ## Module Documentation
 

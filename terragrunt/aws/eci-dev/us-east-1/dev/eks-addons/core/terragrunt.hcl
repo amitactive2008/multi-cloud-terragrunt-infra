@@ -33,9 +33,9 @@ inputs = {
   account_id             = local.account_id
   environment            = local.environment
 
-  coredns_version        = "v1.14.3-eksbuild.2"
-  kube_proxy_version     = "v1.36.0-eksbuild.7"
-  vpc_cni_version        = "v1.22.1-eksbuild.2"
+  coredns_version        = "v1.14.2-eksbuild.4"
+  kube_proxy_version     = "v1.36.0-eksbuild.2"
+  vpc_cni_version        = "v1.21.1-eksbuild.8"
   metrics_server_version = "3.12.2"
 
   tags = {

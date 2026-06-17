@@ -79,23 +79,3 @@ resource "helm_release" "lb_controller" {
 
   depends_on = [aws_eks_pod_identity_association.lb_controller]
 }
-
-# ── IngressClass ──────────────────────────────────────────────────────────────
-
-resource "kubernetes_ingress_class_v1" "alb" {
-  metadata {
-    name = "alb"
-    labels = {
-      "app.kubernetes.io/name" = "aws-load-balancer-controller"
-    }
-    annotations = {
-      "ingressclass.kubernetes.io/is-default-class" = "true"
-    }
-  }
-
-  spec {
-    controller = "ingress.k8s.aws/alb"
-  }
-
-  depends_on = [helm_release.lb_controller]
-}
