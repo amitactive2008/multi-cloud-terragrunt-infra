@@ -11,7 +11,8 @@ eks-addons/
 ├── cluster-autoscaler/   # Kubernetes Cluster Autoscaler
 ├── ebs-csi/              # EBS CSI Driver + gp3 StorageClass
 ├── secret-store-csi/     # Secrets Store CSI + RDS credential mount
-└── pod-identity-s3/      # S3 access via Pod Identity
+├── pod-identity-s3/      # S3 access via Pod Identity
+└── external-dns/         # Route53 DNS sync via Pod Identity
 ```
 
 ## Dependency Order
@@ -23,7 +24,8 @@ core  ←  must be applied first (deploys Pod Identity Agent)
   ├── cluster-autoscaler
   ├── ebs-csi
   ├── secret-store-csi   (also depends on: ../../rds)
-  └── pod-identity-s3
+  ├── pod-identity-s3
+  └── external-dns
 ```
 
 ## Apply
@@ -41,6 +43,7 @@ terragrunt apply --auto-approve --terragrunt-working-dir $BASE/cluster-autoscale
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/ebs-csi
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/secret-store-csi
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/pod-identity-s3
+terragrunt apply --auto-approve --terragrunt-working-dir $BASE/external-dns
 ```
 
 ## Destroy (reverse order)
@@ -48,6 +51,7 @@ terragrunt apply --auto-approve --terragrunt-working-dir $BASE/pod-identity-s3
 ```bash
 BASE=$(pwd)
 
+terragrunt destroy --auto-approve --terragrunt-working-dir $BASE/external-dns
 terragrunt destroy --auto-approve --terragrunt-working-dir $BASE/lb-controller
 terragrunt destroy --auto-approve --terragrunt-working-dir $BASE/cluster-autoscaler
 terragrunt destroy --auto-approve --terragrunt-working-dir $BASE/ebs-csi
@@ -66,6 +70,7 @@ terragrunt destroy --auto-approve --terragrunt-working-dir $BASE/core
 | ebs-csi | `eci-dev/us-east-1/dev/eks-addons/ebs-csi/terraform.tfstate` |
 | secret-store-csi | `eci-dev/us-east-1/dev/eks-addons/secret-store-csi/terraform.tfstate` |
 | pod-identity-s3 | `eci-dev/us-east-1/dev/eks-addons/pod-identity-s3/terraform.tfstate` |
+| external-dns | `eci-dev/us-east-1/dev/eks-addons/external-dns/terraform.tfstate` |
 
 All state is stored in the `terraform-state-088317451471` bucket (eu-central-1).
 
@@ -81,3 +86,4 @@ State keys are relative to `terragrunt/aws/` (the new root location).
 | ebs-csi | `terraform-modules/aws/eks-addons/ebs-csi` |
 | secret-store-csi | `terraform-modules/aws/eks-addons/secret-store-csi` |
 | pod-identity-s3 | `terraform-modules/aws/eks-addons/pod-identity-s3` |
+| external-dns | `terraform-modules/aws/eks-addons/external-dns` |

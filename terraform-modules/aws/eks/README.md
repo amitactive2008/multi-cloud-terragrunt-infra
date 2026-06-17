@@ -20,13 +20,15 @@ EKS Cluster
 │   └── release_version         — auto-resolved from SSM (always latest AMI for the k8s version)
 └── EKS Access Entries
     ├── Per devops_admin_groups  — one IAM role per group; group members assume it
-    │   └── aws_iam_group_policy — allows members to run sts:AssumeRole
+    │   └── aws_iam_group_policy — attaches assume-role policy to pre-existing group
     └── Per cluster_admin_arns  — direct user/role ARNs (e.g. CI service accounts)
 ```
 
 ## Group-based EKS Access (Recommended)
 
-EKS access entries do **not** support IAM groups directly. This module solves that by creating a dedicated **assumable IAM role** for each group listed in `devops_admin_groups`:
+EKS access entries do **not** support IAM groups directly. This module solves that by creating a dedicated **assumable IAM role** for each group listed in `devops_admin_groups`.
+
+> **Prerequisite:** The IAM groups named in `devops_admin_groups` must already exist before applying. The module does **not** create IAM groups — it only creates the IAM role, attaches the assume-role inline policy to the pre-existing group, and registers the role as an EKS access entry.
 
 ```
 devops group member  →  assume <cluster>-devops-group-EKSAdminFullAccessRole  →  EKS cluster-admin

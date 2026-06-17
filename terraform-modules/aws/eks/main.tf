@@ -247,12 +247,6 @@ resource "aws_eks_node_group" "this" {
 # from the group takes effect immediately without any Terraform re-apply.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Ensure IAM groups exist for every configured admin group name
-resource "aws_iam_group" "devops_eks_admin" {
-  for_each = toset(var.devops_admin_groups)
-  name     = each.value
-}
-
 # One assumable role per devops admin group
 resource "aws_iam_role" "devops_eks_admin" {
   for_each = toset(var.devops_admin_groups)
@@ -300,7 +294,7 @@ resource "aws_iam_group_policy" "devops_assume_eks_admin" {
   for_each = toset(var.devops_admin_groups)
 
   name  = "assume-${each.value}-eks-admin"
-  group = aws_iam_group.devops_eks_admin[each.key].name
+  group = each.value
 
   policy = jsonencode({
     Version = "2012-10-17"

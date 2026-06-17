@@ -12,6 +12,7 @@ Collection of independent Terraform modules that install and configure EKS clust
 | [ebs-csi](ebs-csi/) | EBS CSI Driver + gp3 StorageClass | EKS addon + IAM + k8s |
 | [secret-store-csi](secret-store-csi/) | Secrets Store CSI + RDS credential mount | Helm + IAM + k8s |
 | [pod-identity-s3](pod-identity-s3/) | S3 access via Pod Identity for app pods | IAM + k8s |
+| [external-dns](external-dns/) | Route53 DNS sync via Pod Identity | Helm + IAM + k8s |
 
 ## Dependency Graph
 
@@ -22,7 +23,8 @@ core  ←───────────────────────�
   ├── cluster-autoscaler
   ├── ebs-csi
   ├── secret-store-csi      (also needs: rds)
-  └── pod-identity-s3
+  ├── pod-identity-s3
+  └── external-dns
 ```
 
 `core` must be applied first because it deploys the **EKS Pod Identity Agent** DaemonSet. All other modules create `aws_eks_pod_identity_association` resources that require the agent to be running.
@@ -67,6 +69,7 @@ All sub-modules share these base variables:
 | ebs-csi | ✓ | — | ✓ | — |
 | secret-store-csi | ✓ | ✓ | ✓ | ✓ |
 | pod-identity-s3 | ✓ | — | ✓ | — |
+| external-dns | ✓ | ✓ | ✓ | — |
 
 Helm and Kubernetes providers are configured in each module's `providers.tf` using exec-based authentication:
 ```bash

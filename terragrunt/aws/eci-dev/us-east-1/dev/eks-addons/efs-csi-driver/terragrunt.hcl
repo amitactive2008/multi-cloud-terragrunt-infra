@@ -22,7 +22,7 @@ dependency "eks" {
     cluster_endpoint              = "https://mock.example.com"
     cluster_certificate_authority = "bW9jaw=="
   }
-  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
 # Ensures core (Pod Identity Agent) is deployed before this module
@@ -31,7 +31,7 @@ dependency "core" {
   mock_outputs = {
     pod_identity_agent_addon_arn = "arn:aws:eks:us-east-1:000000000000:addon/mock/eks-pod-identity-agent/mock"
   }
-  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
 dependency "vpc" {
@@ -41,7 +41,7 @@ dependency "vpc" {
     vpc_cidr_block     = "10.0.0.0/16"
     private_subnet_ids = ["subnet-00000001", "subnet-00000002"]
   }
-  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
 inputs = {

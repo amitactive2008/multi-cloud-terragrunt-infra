@@ -18,7 +18,8 @@ vpc
  └── eks
       └── rds
            └── eks-addons/core
-                    └── eks-addons/{lb-controller,cluster-autoscaler,ebs-csi,secret-store-csi,pod-identity-s3}
+                    └── eks-addons/{lb-controller,cluster-autoscaler,ebs-csi,
+                                   secret-store-csi,pod-identity-s3,external-dns}
 ```
 
 ## Apply All
@@ -35,6 +36,7 @@ terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/cluste
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/ebs-csi
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/secret-store-csi
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/pod-identity-s3
+terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/external-dns
 ```
 
 ## Destroy All (reverse order)
@@ -42,9 +44,9 @@ terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/pod-id
 ```bash
 BASE=$(pwd)
 
-for dir in eks-addons/pod-identity-s3 eks-addons/secret-store-csi eks-addons/ebs-csi \
-           eks-addons/cluster-autoscaler eks-addons/lb-controller eks-addons/core \
-           rds eks rds vpc; do
+for dir in eks-addons/external-dns eks-addons/pod-identity-s3 eks-addons/secret-store-csi \
+           eks-addons/ebs-csi eks-addons/cluster-autoscaler eks-addons/lb-controller \
+           eks-addons/core rds eks vpc; do
   terragrunt destroy --auto-approve --terragrunt-working-dir $BASE/$dir
 done
 ```

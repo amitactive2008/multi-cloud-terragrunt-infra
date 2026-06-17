@@ -21,7 +21,8 @@ AWS Account eci-dev / us-east-1 / dev
 │      ├── cluster-autoscaler                 │
 │      ├── ebs-csi     (gp3 StorageClass)     │
 │      ├── secret-store-csi (Secrets Manager) │
-│      └── pod-identity-s3  (S3 access)       │
+│      ├── pod-identity-s3  (S3 access)       │
+│      └── external-dns    (Route53 sync)     │
 │                                             │
 │  RDS: MySQL 8.0 (dev-mysql)                 │
 │  Secrets Manager: dev/rds/credentials       │
@@ -159,7 +160,8 @@ cloud/account-name/region/env/component/terragrunt.hcl
 vpc → eks → rds
               └── eks-addons/core
                        └── lb-controller, cluster-autoscaler, ebs-csi,
-                           secret-store-csi (+ rds), pod-identity-s3
+                           secret-store-csi (+ rds), pod-identity-s3,
+                           external-dns
 ```
 
 ### Apply all (AWS dev)
@@ -176,6 +178,7 @@ terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/cluste
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/ebs-csi
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/secret-store-csi
 terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/pod-identity-s3
+terragrunt apply --auto-approve --terragrunt-working-dir $BASE/eks-addons/external-dns
 ```
 
 Terragrunt v1 shortcut (run from `terragrunt/aws/eci-dev/us-east-1/dev` only):
