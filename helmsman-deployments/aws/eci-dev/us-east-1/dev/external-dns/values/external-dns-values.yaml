@@ -11,12 +11,13 @@ env:
     value: "us-east-1"
 
 # ─── Domain filters ───────────────────────────────────────────────────────────
-domainFilters:
-  - "dev.eci.example.com"   # Replace with your actual domain
+# Optional when zoneIdFilters is set. Keep empty to avoid mismatches with
+# placeholder domains.
+domainFilters: []
 
 # ─── Hosted Zone filters (optional but recommended) ───────────────────────────
-# zoneIdFilters:
-#   - "ZXXXXXXXXXX"   # Uncomment and set to your Route53 hosted zone ID
+zoneIdFilters:
+  - "Z00208349B1KPAQN1J8J"
 
 # ─── Sync policy ──────────────────────────────────────────────────────────────
 policy: "sync"          # sync = create & delete records; upsert-only = create only

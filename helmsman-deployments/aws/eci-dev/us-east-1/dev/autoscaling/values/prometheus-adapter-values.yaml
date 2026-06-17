@@ -5,8 +5,9 @@
 
 # ─── Prometheus connection ────────────────────────────────────────────────────
 prometheus:
-  # Points to the kube-prometheus-stack Prometheus service
-  url: "http://prometheus-kube-prometheus-prometheus.monitoring.svc"
+  # Points to the kube-prometheus-stack Prometheus service.
+  # This repo uses fullnameOverride: prometheus, which creates service prometheus-prometheus.
+  url: "http://prometheus-prometheus.monitoring.svc"
   port: 9090
   path: ""
 

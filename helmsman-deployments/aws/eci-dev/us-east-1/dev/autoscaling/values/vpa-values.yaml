@@ -12,9 +12,6 @@ admissionController:
     limits:
       cpu: "200m"
       memory: "512Mi"
-  certGen:
-    image:
-      tag: "1.27.2"
 
 # ─── Recommender ──────────────────────────────────────────────────────────────
 recommender:

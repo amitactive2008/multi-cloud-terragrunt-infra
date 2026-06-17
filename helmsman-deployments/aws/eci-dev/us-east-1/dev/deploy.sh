@@ -42,6 +42,11 @@ done
 run_helmsman() {
   local component="$1"
   local component_dir="${SCRIPT_DIR}/${component}"
+  local -a helmsman_args
+
+  # Keep other Helmsman-managed releases when deploying a single component.
+  helmsman_args=("${ACTION}" "-keep-untracked-releases")
+
   echo ""
   echo "=============================="
   echo " Component: ${component}"
@@ -52,7 +57,11 @@ run_helmsman() {
     # shellcheck disable=SC1090
     source "${component_dir}/.env"
   fi
-  helmsman ${ACTION} -f "${component_dir}/dsf.yaml"
+
+  # Run from component directory so relative values/charts paths resolve consistently.
+  pushd "${component_dir}" >/dev/null
+  helmsman "${helmsman_args[@]}" -f "dsf.yaml"
+  popd >/dev/null
 
   # Monitoring post-step: manage internal ALB ingress in the same flow.
   if [[ "${component}" == "monitoring" ]]; then

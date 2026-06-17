@@ -37,7 +37,7 @@ apps:
     namespace: "kube-system"
     enabled: true
     chart: "fairwinds-stable/vpa"
-    version: "4.7.3"
+    version: "4.12.1"
     valuesFiles:
       - "values/vpa-values.yaml"
     wait: true
